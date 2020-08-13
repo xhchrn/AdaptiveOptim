@@ -19,15 +19,17 @@ class IstaTF(_OptimTF):
         K, p = self.D.shape
         self.Z = tf.placeholder(shape=[None, K], dtype=tf.float32,
                                 name='Z')
+        self.Zr = tf.placeholder(shape=[None, K], dtype=tf.float32,
+                                name='Zr')
         self.X = tf.placeholder(shape=[None, p], dtype=tf.float32,
                                 name='X')
         self.lmbd = tf.placeholder(dtype=tf.float32, name='lmbd')
-        self.feed_map = {"Z": self.Z, "X": self.X, "lmbd": self.lmbd}
+        self.feed_map = {"Z": self.Z, "X": self.X, "lmbd": self.lmbd, 'Zr': self.Zr}
 
-        return (self.Z, self.X, self.lmbd)
+        return (self.Z, self.X, self.lmbd, self.Zr)
 
     def _get_step(self, inputs):
-        Z, X, lmbd = self.inputs
+        Z, X, lmbd, _ = self.inputs
         K, p = self.D.shape
         L = self.L
         with tf.name_scope("step_ISTA"):
@@ -43,14 +45,18 @@ class IstaTF(_OptimTF):
         return step, dz
 
     def _get_cost(self, inputs):
-        Z, X, lmbd = self.inputs
+        Z, X, lmbd, Zr = self.inputs
         with tf.name_scope("Cost"):
-            rec = tf.matmul(Z, tf.constant(self.D))
-            Er = tf.reduce_mean(
-                tf.reduce_sum(tf.squared_difference(rec, X),
-                              reduction_indices=[1]))/2
-            cost = Er + lmbd * tf.reduce_mean(
-                tf.reduce_sum(tf.abs(Z), reduction_indices=[1]))
+            cost = tf.reduce_mean(
+                tf.reduce_sum(tf.squared_difference(Z, Zr),
+                              reduction_indices=[1])
+            ) / 2
+            # rec = tf.matmul(Z, tf.constant(self.D))
+            # Er = tf.reduce_mean(
+            #     tf.reduce_sum(tf.squared_difference(rec, X),
+            #                   reduction_indices=[1]))/2
+            # cost = Er + lmbd * tf.reduce_mean(
+            #     tf.reduce_sum(tf.abs(Z), reduction_indices=[1]))
 
         return cost
 

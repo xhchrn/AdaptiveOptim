@@ -66,6 +66,8 @@ class _LOptimNetwork(object):
             self._output = self._get_output(outputs)
             with tf.name_scope("Cost"):
                 self._cost = self._get_cost(outputs)
+            with tf.name_scope("NMSE"):
+                self._nmse = self._get_nmse(outputs)
 
             c_val = tf.Variable(tf.constant(0, dtype=tf.float32),
                                 name='c_val')
@@ -330,6 +332,10 @@ class _LOptimNetwork(object):
     def cost(self, **feed_dict):
         feed_dict = self._convert_feed(feed_dict)
         return self.session.run(self._cost, feed_dict=feed_dict)
+
+    def nmse(self, **feed_dict):
+        feed_dict = self._convert_feed(feed_dict)
+        return self.session.run(self._nmse, feed_dict=feed_dict)
 
     def _convert_feed(self, feed):
         _feed = {}

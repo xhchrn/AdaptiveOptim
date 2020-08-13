@@ -20,16 +20,18 @@ class FistaTF(_OptimTF):
         self.X = tf.placeholder(shape=[None, p], dtype=tf.float32,  name='X')
         self.Z = tf.zeros(shape=[tf.shape(self.X)[0], K], dtype=tf.float32,
                           name='Zk')
+        self.Zr = tf.zeros(shape=[tf.shape(self.X)[0], K], dtype=tf.float32,
+                          name='Zr')
         self.Y = tf.zeros_like(self.Z, name='Yk')
         self.theta = tf.placeholder(dtype=tf.float32, name='theta')
         self.lmbd = tf.placeholder(dtype=tf.float32, name='lmbd')
         self.feed_map = {"Z": self.Y, "X": self.X, "theta": self.theta,
-                         "lmbd": self.lmbd}
+                         "lmbd": self.lmbd, self.Zr}
 
-        return (self.Z, self.Y, self.X, self.theta, self.lmbd)
+        return (self.Z, self.Y, self.X, self.theta, self.lmbd, self.Zr)
 
     def _get_step(self, inputs):
-        Z, Y, X, theta, lmbd = self.inputs
+        Z, Y, X, theta, lmbd, _ = self.inputs
         K, p = self.D.shape
         L = self.L
         with tf.name_scope("ISTA_iteration"):
@@ -51,18 +53,16 @@ class FistaTF(_OptimTF):
         return step, self.dz
 
     def _get_cost(self, inputs):
-        Z, _, X, _, lmbd = self.inputs
+        Z, _, X, _, lmbd, Zr = self.inputs
         with tf.name_scope("Cost"):
-            rec = tf.matmul(Z, tf.constant(self.D))
-            Er = tf.reduce_mean(
-                tf.reduce_sum(tf.squared_difference(rec, X),
-                              reduction_indices=[1]))/2
-            cost = Er + lmbd*tf.reduce_mean(
-                tf.reduce_sum(tf.abs(Z), reduction_indices=[1]))
+            cost = tf.reduce_mean(
+                tf.reduce_sum(tf.squared_difference(Z, Zr),
+                              reduction_indices=[1])
+            ) / 2
 
         return cost
 
-    def optimize(self, X, lmbd, Z=None, max_iter=1, tol=1e-5):
+    def optimize(self, X, lmbd, Zr, Z=None, max_iter=1, tol=1e-5):
         if Z is None:
             batch_size = X.shape[0]
             K = self.D.shape[0]
@@ -72,7 +72,7 @@ class FistaTF(_OptimTF):
 
         z_curr = np.copy(Z)
         feed = {self.X: X, self.Z: z_curr, self.Y: y_curr,
-                self.theta: 1, self.lmbd: lmbd}
+                self.theta: 1, self.lmbd: lmbd, self.Zr: Zr}
         feed2 = {self.X: X, self.Z: y_curr, self.lmbd: lmbd}
         self.train_cost = []
         for k in range(max_iter):

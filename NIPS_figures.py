@@ -172,24 +172,25 @@ if __name__ == '__main__':
     if args.debug < 20:
         it_lista = it_lfista = it_facto = it_lin = 10
     run_exps = [
-        {'n_layers': 1,
-         'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
-        {'n_layers': 2,
-         'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
-        {'n_layers': 4,
-         'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
-        {'n_layers': 7,
-         'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
-        {'n_layers': 12,
-         'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
-        {'n_layers': 21,
-         'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
-        {'n_layers': 35,
-         'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
-        {'n_layers': 59,
-         'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
-        {'n_layers': 100,
-         'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
+        # {'n_layers': 1,
+        #  'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
+        # {'n_layers': 2,
+        #  'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
+        # {'n_layers': 4,
+        #  'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
+        # {'n_layers': 7,
+        #  'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
+        # {'n_layers': 12,
+        #  'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
+        {'n_layers': 16, 'lfista': it_lfista},
+        # {'n_layers': 21,
+        #  'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
+        # {'n_layers': 35,
+        #  'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
+        # {'n_layers': 59,
+        #  'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
+        # {'n_layers': 100,
+        #  'lista': it_lista, 'lfista': it_lfista, 'facto': it_facto},
     ]
     layer_lvl = [v['n_layers'] for v in run_exps]
 
@@ -203,10 +204,12 @@ if __name__ == '__main__':
     if dataset == 'artificial':
         from adaopt.simple_problem_generator import SimpleProblemGenerator
         from adaopt.simple_problem_generator import create_dictionary
-        p = 64                 # Dimension of the data
+        p = 250                 # Dimension of the data
         D = create_dictionary(K, p, seed=290890)
         pb = SimpleProblemGenerator(D, lmbd, rho=rho, batch_size=batch_size,
                                     corr=corr, seed=422742)
+    elif dataset == 'ista-nas':
+        pass
     elif dataset == 'mnist':
         from adaopt.mnist_problem_generator import MnistProblemGenerator
         from adaopt.mnist_problem_generator import create_dictionary_dl
@@ -230,37 +233,37 @@ if __name__ == '__main__':
     C0 = pb.lasso_cost(zs_test, sig_test)
 
     # Compute optimal values for validation/test sets using ISTA/FISTA
-    ista = IstaTF(D, gpu_usage=gpu_usage)
-    ista.optimize(X=sig_test, lmbd=lmbd, Z=zs_test,
-                  max_iter=10000, tol=1e-8 * C0)
+    # ista = IstaTF(D, gpu_usage=gpu_usage)
+    # ista.optimize(X=sig_test, lmbd=lmbd, Z=zs_test,
+    #               max_iter=10000, tol=1e-8 * C0)
 
-    fista = FistaTF(D, gpu_usage=gpu_usage)
-    fista.optimize(X=sig_val, lmbd=lmbd, Z=zs_val,
-                   max_iter=10000, tol=1e-8 * C0)
-    c_val = fista.train_cost[-1]
-    fista.optimize(X=sig_test, lmbd=lmbd, Z=zs_test,
-                   max_iter=10000, tol=1e-8 * C0)
+    # fista = FistaTF(D, gpu_usage=gpu_usage)
+    # fista.optimize(X=sig_val, lmbd=lmbd, Z=zs_val,
+    #                max_iter=10000, tol=1e-8 * C0)
+    # c_val = fista.train_cost[-1]
+    # fista.optimize(X=sig_test, lmbd=lmbd, Z=zs_test,
+    #                max_iter=10000, tol=1e-8 * C0)
 
     feed_test = {"Z": zs_test, "X": sig_test, "lmbd": lmbd}
     feed_val = {"Z": zs_val, "X": sig_val, "lmbd": lmbd,
                 "c_val": c_val - 1e-10}
 
     # Compute the first layer of linear models
-    network = LinearNetwork(D, 1, gpu_usage=gpu_usage, exp_dir=NAME_EXP)
-    network.train(pb, max_iter=it_lin, steps=steps, feed_val=feed_val,
-                  reg_cost=8, tol=1e-8, lr_init=lr_init)
-    linear = IstaTF(D, gpu_usage=gpu_usage)
-    linear.optimize(X=sig_test, lmbd=lmbd, Z=network.output(**feed_test),
-                    max_iter=10000, tol=1e-8 * C0)
+    # network = LinearNetwork(D, 1, gpu_usage=gpu_usage, exp_dir=NAME_EXP)
+    # network.train(pb, max_iter=it_lin, steps=steps, feed_val=feed_val,
+    #               reg_cost=8, tol=1e-8, lr_init=lr_init)
+    # linear = IstaTF(D, gpu_usage=gpu_usage)
+    # linear.optimize(X=sig_test, lmbd=lmbd, Z=network.output(**feed_test),
+    #                 max_iter=10000, tol=1e-8 * C0)
 
     # Free the ressources
-    ista.terminate()
-    fista.terminate()
-    linear.terminate()
+    # ista.terminate()
+    # fista.terminate()
+    # linear.terminate()
 
-    c_star = min(ista.train_cost[-1],
-                 fista.train_cost[-1])
-    print(ista.train_cost[-1], fista.train_cost[-1], C0)
+    # c_star = min(ista.train_cost[-1],
+    #              fista.train_cost[-1])
+    # print(ista.train_cost[-1], fista.train_cost[-1], C0)
 
     # Reload past experiment points
     networks = {}
@@ -271,18 +274,21 @@ if __name__ == '__main__':
         curve_cost['linear'] = linear.train_cost
     except FileNotFoundError:
         c_star = min(ista.train_cost[-1], fista.train_cost[-1]) - eps
-        curve_cost = {'lista': 2 * C0 * np.ones(len(layer_lvl)),
-                      'lfista': 2 * C0 * np.ones(len(layer_lvl)),
-                      'facto': 2 * C0 * np.ones(len(layer_lvl)),
-                      'ista': ista.train_cost,
-                      'fista': fista.train_cost,
-                      'linear': linear.train_cost
-                      }
+        # curve_cost = {'lista': 2 * C0 * np.ones(len(layer_lvl)),
+        #               'lfista': 2 * C0 * np.ones(len(layer_lvl)),
+        #               'facto': 2 * C0 * np.ones(len(layer_lvl)),
+        #               'ista': ista.train_cost,
+        #               'fista': fista.train_cost,
+        #               'linear': linear.train_cost
+        #               }
+        curve_cost = {'lfista': 2 * C0 * np.ones(len(layer_lvl))}
     np.save(save_curve, curve_cost)
 
     # Run the experiments
-    models = [('lista', LIstaNetwork), ('lfista', LFistaNetwork),
-              ('facto', FactoNetwork)]
+    # models = [('lista', LIstaNetwork), ('lfista', LFistaNetwork),
+    #           ('facto', FactoNetwork)]
+    models = [('lfista', LFistaNetwork)]
+              
     wp = {}
     for m, _ in models:
         wp[m] = []
@@ -308,7 +314,8 @@ if __name__ == '__main__':
                 if warm_params:
                     wp[model] = network.export_param()
 
-                curve_cost[model][i] = network.cost(**feed_test)
+                # curve_cost[model][i] = network.cost(**feed_test)
+                curve_cost[model][i] = network.nmse(**feed_test)
                 np.save(save_curve, curve_cost)
                 try:
                     np.save(os.path.join(

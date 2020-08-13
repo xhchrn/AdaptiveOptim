@@ -6,6 +6,11 @@ from .utils import start_handler
 from .helper_tf import soft_thresholding
 from ._loptim_network import _LOptimNetwork
 
+def log10(x):
+  numerator = tf.math.log(x)
+  denominator = tf.math.log(tf.constant(10, dtype=numerator.dtype))
+  return numerator / denominator
+
 
 class LFistaNetwork(_LOptimNetwork):
     """Lifsta Neural Network"""
@@ -44,9 +49,11 @@ class LFistaNetwork(_LOptimNetwork):
         self.lmbd = tf.placeholder(dtype=tf.float32, name='lambda')
         self.Z = tf.zeros(shape=[tf.shape(self.X)[0], K], dtype=tf.float32,
                           name='Z_0')
+        self.Zr = tf.zeros(shape=[tf.shape(self.X)[0], K], dtype=tf.float32,
+                          name='Zr')
 
-        self.feed_map = {"Z": self.Z, "X": self.X, "lmbd": self.lmbd}
-        return (self.Z, None, self.X, self.lmbd)
+        self.feed_map = {"Z": self.Z, "X": self.X, "lmbd": self.lmbd, "Zr": self.Zr}
+        return (self.Z, None, self.X, self.lmbd, self.Zr)
 
     def _get_cost(self, outputs):
         """Construct the cost function from the outputs of the last layer. This
@@ -64,20 +71,66 @@ class LFistaNetwork(_LOptimNetwork):
         reg: a tensor for computing regularisation of the parameters.
             It should be 0 if no regularization is needed.
         """
-        Zk, _, X, lmbd = outputs
-
-        with tf.name_scope("reconstruction_zD"):
-            rec = tf.matmul(Zk, tf.constant(self.D))
+        Zk, _, X, lmbd, Zr = outputs
 
         with tf.name_scope("norm_2"):
-            Er = .5*tf.reduce_mean(tf.reduce_sum(
-                tf.squared_difference(rec, X), reduction_indices=[1]))
+            Er = tf.reduce_mean(tf.reduce_sum(
+                tf.squared_difference(Zk, Zr), reduction_indices=[1]))
 
-        with tf.name_scope("norm_1"):
-            l1 = lmbd*tf.reduce_mean(tf.reduce_sum(
-                tf.abs(Zk), reduction_indices=[1]))
+        # with tf.name_scope("reconstruction_zD"):
+        #     rec = tf.matmul(Zk, tf.constant(self.D))
 
-        return tf.add(Er, l1, name="cost")
+        # with tf.name_scope("norm_2"):
+        #     Er = .5*tf.reduce_mean(tf.reduce_sum(
+        #         tf.squared_difference(rec, X), reduction_indices=[1]))
+
+        # with tf.name_scope("norm_1"):
+        #     l1 = lmbd*tf.reduce_mean(tf.reduce_sum(
+        #         tf.abs(Zk), reduction_indices=[1]))
+
+        # return tf.add(Er, l1, name="cost")
+
+        return Er
+
+    def _get_nmse(self, outputs):
+        """Construct the cost function from the outputs of the last layer. This
+        will be used through SGD to train the network.
+
+        Parameters
+        ----------
+        outputs: tuple fo tensors (n_out)
+            a tuple of tensor containing the output from the last layer of the
+            network
+
+        Returns
+        -------
+        cost: a tensor computing the cost function of the network.
+        reg: a tensor for computing regularisation of the parameters.
+            It should be 0 if no regularization is needed.
+        """
+        Zk, _, X, lmbd, Zr = outputs
+
+        with tf.name_scope("norm_2"):
+            Er = tf.reduce_sum(
+                tf.squared_difference(Zk, Zr), reduction_indices=[1])
+            Denom = tf.reduce_sum(
+                tf.squared_difference(Zr, 0), reduction_indices=[1])
+            NMSE = 10.0 * tf.reduce_mean(log10(Er / Denom))   
+
+        # with tf.name_scope("reconstruction_zD"):
+        #     rec = tf.matmul(Zk, tf.constant(self.D))
+
+        # with tf.name_scope("norm_2"):
+        #     Er = .5*tf.reduce_mean(tf.reduce_sum(
+        #         tf.squared_difference(rec, X), reduction_indices=[1]))
+
+        # with tf.name_scope("norm_1"):
+        #     l1 = lmbd*tf.reduce_mean(tf.reduce_sum(
+        #         tf.abs(Zk), reduction_indices=[1]))
+
+        # return tf.add(Er, l1, name="cost")
+
+        return NMSE
 
     def _get_feed(self, batch_provider):
         """Construct the feed dictionary from the batch provider
@@ -86,10 +139,11 @@ class LFistaNetwork(_LOptimNetwork):
         optimization from the batch provider. It will put in correspondance
         the tuple return by the batch_provider and the input placeholders.
         """
-        sig_batch, _, zs_batch, lmbd = batch_provider.get_batch()
+        sig_batch, zr_batch, zs_batch, lmbd = batch_provider.get_batch()
         feed_dict = {self.Z: zs_batch,
                      self.X: sig_batch,
-                     self.lmbd: lmbd}
+                     self.lmbd: lmbd,
+                     self.Zr: zr_batch}
         return feed_dict
 
     def _layer(self, inputs, params=None, id_layer=0):
@@ -112,7 +166,7 @@ class LFistaNetwork(_LOptimNetwork):
         outputs: tuple of tensors (n_out) st n_out = n_in, to chain the layers.
         params: tuple of tensors (n_param) with the parameters of this layer
         """
-        Z, Z_1, X, lmbd = inputs
+        Z, Z_1, X, lmbd, Zr = inputs
         L, (K, p), k = self.L, self.D.shape, id_layer
         if params:
             Wg, Wm, We, theta = params
@@ -144,4 +198,4 @@ class LFistaNetwork(_LOptimNetwork):
 
         tf.identity(Zk, name="output")
 
-        return (Zk, Z, X, lmbd), (Wg, Wm, We, theta)
+        return (Zk, Z, X, lmbd, Zr), (Wg, Wm, We, theta)
