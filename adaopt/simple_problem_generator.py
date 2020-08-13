@@ -47,9 +47,9 @@ class SimpleProblemGenerator(object):
         
         # Draw a additive Gaussian noise with given SNR
         if SNR != 'inf':
-            std = np.std(sig, axis=1) * np.power (10.0, -SNR/20.0)
+            std = np.std(sig, axis=1, keepdims=True) * np.power (10.0, -SNR/20.0)
             std = np.maximum(std, 1e-50)
-            noise = np.random.normal(size=sig.shape, scale=std).astype(np.float32)
+            noise = np.random.normal(size=sig.shape).astype(np.float32) * std
         else:
             noise = 0.0
 
