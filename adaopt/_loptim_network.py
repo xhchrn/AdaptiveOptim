@@ -297,7 +297,7 @@ class _LOptimNetwork(object):
                                " ({:10.3e})".format(it, dE))
                 self._scale_lr *= .95
                 self._last_downscale = it
-        return cost - self._feed_val[self.feed_map['c_val']]
+        return cost
 
     def epoch_layer(self, lr_init, reg_cost, tol):
         it = self.global_step.eval()
