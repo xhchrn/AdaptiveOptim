@@ -268,12 +268,12 @@ if __name__ == '__main__':
 
     # Reload past experiment points
     networks = {}
-    try:
-        curve_cost = np.load(save_curve).take(0)
-        curve_cost['ista'] = ista.train_cost
-        curve_cost['fista'] = fista.train_cost
-        curve_cost['linear'] = linear.train_cost
-    except FileNotFoundError:
+    # try:
+        # curve_cost = np.load(save_curve).take(0)
+        # curve_cost['ista'] = ista.train_cost
+        # curve_cost['fista'] = fista.train_cost
+        # curve_cost['linear'] = linear.train_cost
+    # except FileNotFoundError:
         # c_star = min(ista.train_cost[-1], fista.train_cost[-1]) - eps
         # curve_cost = {'lista': 2 * C0 * np.ones(len(layer_lvl)),
         #               'lfista': 2 * C0 * np.ones(len(layer_lvl)),
@@ -282,7 +282,7 @@ if __name__ == '__main__':
         #               'fista': fista.train_cost,
         #               'linear': linear.train_cost
         #               }
-        curve_cost = {'lfista': 2 * C0 * np.ones(len(layer_lvl))}
+    curve_cost = {'lfista': 2 * C0 * np.ones(len(layer_lvl))}
     np.save(save_curve, curve_cost)
 
     # Run the experiments
