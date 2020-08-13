@@ -132,14 +132,14 @@ class LFistaNetwork(_LOptimNetwork):
 
         return NMSE
 
-    def _get_feed(self, batch_provider):
+    def _get_feed(self, batch_provider, SNR):
         """Construct the feed dictionary from the batch provider
 
         This method will be use to feed the network at each step of the
         optimization from the batch provider. It will put in correspondance
         the tuple return by the batch_provider and the input placeholders.
         """
-        sig_batch, zr_batch, zs_batch, lmbd = batch_provider.get_batch()
+        sig_batch, zr_batch, zs_batch, lmbd = batch_provider.get_batch(SNR)
         feed_dict = {self.Z: zs_batch,
                      self.X: sig_batch,
                      self.lmbd: lmbd,

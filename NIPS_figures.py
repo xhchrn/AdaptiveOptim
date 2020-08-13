@@ -139,6 +139,8 @@ if __name__ == '__main__':
                              '["artificial", "images", "mnist"]')
     parser.add_argument('-K', type=int, default=100,
                         help='Number of dictionary elements used.')
+    parser.add_argument('--SNR', type=int, default=-1,
+                        help='Gaussian noise level')
     args = parser.parse_args()
 
     # General Setup and constants
@@ -163,10 +165,12 @@ if __name__ == '__main__':
     # Extra network params
     warm_params = True      # Reuse the parameters from smaller network
     lr_init = 5e-2          # Initial learning rate for the gradient descent
-    lr_init = 1e-1          # Initial learning rate for the gradient descent
+    lr_init = 5e-3          # Initial learning rate for the gradient descent
     lr_fn = 1e-3            # Initial learning rate for GD in FacNet
     steps = 100             # Number of steps fo GD between validation
     batch_size = 128        # Size of the batch for the training
+
+    SNR = 'inf' if args.SNR < 0 else args.SNR
 
     # Setup the experiment plan
     it_lista = it_lfista = it_facto = it_lin = 600
@@ -229,8 +233,8 @@ if __name__ == '__main__':
         raise NameError("dataset {} not recognized by the script"
                         "".format(dataset))
 
-    sig_test, z0_test, zs_test, _ = pb.get_test(N_test)
-    sig_val, z0_val, zs_val, _ = pb.get_batch(N_val)
+    sig_test, z0_test, zs_test, _ = pb.get_test(N_test, SNR)
+    sig_val, z0_val, zs_val, _ = pb.get_batch(N_val, SNR)
     C0 = pb.lasso_cost(zs_test, sig_test)
 
     # Compute optimal values for validation/test sets using ISTA/FISTA
@@ -311,7 +315,7 @@ if __name__ == '__main__':
                     batch_provider=pb, feed_val=feed_val, max_iter=expe[model],
                     steps=steps, reg_cost=8, tol=1e-8,
                     # lr_init=lr_init if 'facto' != model else lr_fn/n_layers,
-                    lr_init=lr_init / n_layers)
+                    lr_init=lr_init / n_layers, SNR=SNR)
                 if warm_params:
                     wp[model] = network.export_param()
 

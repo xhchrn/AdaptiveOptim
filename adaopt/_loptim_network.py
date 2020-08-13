@@ -217,7 +217,7 @@ class _LOptimNetwork(object):
         self.log.info("Model saved in file: %s" % save_path)
 
     def train(self, batch_provider, feed_val, max_iter, steps, lr_init=.01,
-              tol=1e-5, reg_cost=15, model_name='loptim', save_model=False):
+              tol=1e-5, reg_cost=15, model_name='loptim', save_model=False, SNR='inf'):
         """Train the network
         """
         self._feed_val = self._convert_feed(feed_val)
@@ -234,7 +234,7 @@ class _LOptimNetwork(object):
                 out.write("\rTraining {}: {:7.2%} - {:10.3e}"
                           .format(self.name, k / (max_iter * steps), dE))
                 out.flush()
-                feed_dict = self._get_feed(batch_provider)
+                feed_dict = self._get_feed(batch_provider, SNR)
                 # it = self.global_step.eval()
                 feed_dict[self.lr] = self._scale_lr * lr_init  # *np.log(np.e+it)
                 cost, _ = self.session.run(

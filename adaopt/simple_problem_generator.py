@@ -27,7 +27,7 @@ class SimpleProblemGenerator(object):
         self.corr, self.t = self._generate_block_binary(n_block, corr)
         self.sig = (1 - corr) * np.eye(self.K) + corr * (self.corr > 0)
 
-    def get_batch(self, N=None):
+    def get_batch(self, N=None, SNR='inf'):
         '''Generate a set of N problems, with a signal, a starting point and
         the waited answer.
         '''
@@ -44,10 +44,21 @@ class SimpleProblemGenerator(object):
         # z_start = self.rng.random_sample(size=(N, z.shape[-1]))
         z_start = np.zeros(z.shape, dtype=np.float32)
         sig = z.dot(self.D)
+        
+        # Draw a additive Gaussian noise with given SNR
+        if SNR != 'inf':
+            std = np.std(sig, axis=1) * np.power (10.0, -SNR/20.0)
+            std = np.maximum(std, 1e-50)
+            noise = np.random.normal(size=sig.shape, scale=std).astype(np.float32)
+        else:
+            noise = 0.0
+
+        sig += noise
+
         return sig, z, z_start, self.lmbd
 
-    def get_test(self, N):
-        return self.get_batch(N)
+    def get_test(self, N, SNR):
+        return self.get_batch(N, SNR)
 
     def lasso_cost(self, z, sig):
         '''Cost of the point z for a problem with sig'''
