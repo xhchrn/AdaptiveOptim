@@ -26,7 +26,7 @@ class FistaTF(_OptimTF):
         self.theta = tf.placeholder(dtype=tf.float32, name='theta')
         self.lmbd = tf.placeholder(dtype=tf.float32, name='lmbd')
         self.feed_map = {"Z": self.Y, "X": self.X, "theta": self.theta,
-                         "lmbd": self.lmbd, self.Zr}
+                         "lmbd": self.lmbd, "Zr": self.Zr}
 
         return (self.Z, self.Y, self.X, self.theta, self.lmbd, self.Zr)
 
