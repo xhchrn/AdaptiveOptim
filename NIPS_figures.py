@@ -244,9 +244,9 @@ if __name__ == '__main__':
     # fista.optimize(X=sig_test, lmbd=lmbd, Z=zs_test,
     #                max_iter=10000, tol=1e-8 * C0)
 
-    feed_test = {"Z": zs_test, "X": sig_test, "lmbd": lmbd}
-    feed_val = {"Z": zs_val, "X": sig_val, "lmbd": lmbd,
-                "c_val": c_val - 1e-10}
+    feed_test = {"Z": zs_test, "X": sig_test, "lmbd": lmbd, "Zr": z0_test}
+    feed_val = {"Z": zs_val, "X": sig_val, "lmbd": lmbd, "Zr": z0_val}
+                # "c_val": c_val - 1e-10}
 
     # Compute the first layer of linear models
     # network = LinearNetwork(D, 1, gpu_usage=gpu_usage, exp_dir=NAME_EXP)
