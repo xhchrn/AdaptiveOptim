@@ -166,7 +166,7 @@ if __name__ == '__main__':
     lr_init = 1e-1          # Initial learning rate for the gradient descent
     lr_fn = 1e-3            # Initial learning rate for GD in FacNet
     steps = 100             # Number of steps fo GD between validation
-    batch_size = 300        # Size of the batch for the training
+    batch_size = 128        # Size of the batch for the training
 
     # Setup the experiment plan
     it_lista = it_lfista = it_facto = it_lin = 600
