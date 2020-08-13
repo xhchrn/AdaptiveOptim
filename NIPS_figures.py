@@ -23,7 +23,7 @@ from adaopt.linear_network import LinearNetwork
 
 def mk_curve(curve_cost, max_iter=1000, eps=1e-6):
     # Plot the layer curve
-    c_star = min(curve_cost['ista'][-1], curve_cost['fista'][-1]) - eps
+    # c_star = min(curve_cost['ista'][-1], curve_cost['fista'][-1]) - eps
 
     fig = plt.figure('Curve layer')
     fig.clear()
@@ -35,25 +35,26 @@ def mk_curve(curve_cost, max_iter=1000, eps=1e-6):
     max_iter = min(max_iter, len(curve_cost['ista']))
     layer_lvl = [1, 2, 4, 7, 12, 21, 35, 59, 100]
 
-    for model, name, style in [('lista', 'L-ISTA', 'bo-'),
-                               ('lfista', 'L-FISTA', 'c*-'),
-                               ('facto', 'FacNet', 'rd-')]:
-        cc = np.maximum(curve_cost[model] - c_star, eps)
+    # for model, name, style in [('lista', 'L-ISTA', 'bo-'),
+    #                            ('lfista', 'L-FISTA', 'c*-'),
+    #                            ('facto', 'FacNet', 'rd-')]:
+    for model, name, style in [('lfista', 'L-FISTA', 'c*-')]:
+        cc = np.maximum(curve_cost[model])
         y_max = max(y_max, cc[0])
         ax.loglog(layer_lvl, cc, style, label=name)
 
-    for model, name, style in [('ista', 'ISTA', 'g-'),
-                               ('fista', 'FISTA', 'ys-'),
-                               ('linear', 'Linear', 'g--o')]:
-        cc = np.maximum(curve_cost[model] - c_star, eps)
-        y_max = max(y_max, cc[0])
-        iters = min(max_iter, len(cc))
-        makers = np.unique((10**np.arange(0, np.log10(iters - 1), 2 / 9)
-                            ).astype(int)) - 1
-        t = range(1, len(cc))
-        ax.loglog(t, cc[1:], style,
-                  markevery=makers,
-                  label=name)
+    # for model, name, style in [('ista', 'ISTA', 'g-'),
+    #                            ('fista', 'FISTA', 'ys-'),
+    #                            ('linear', 'Linear', 'g--o')]:
+    #     cc = np.maximum(curve_cost[model] - c_star, eps)
+    #     y_max = max(y_max, cc[0])
+    #     iters = min(max_iter, len(cc))
+    #     makers = np.unique((10**np.arange(0, np.log10(iters - 1), 2 / 9)
+    #                         ).astype(int)) - 1
+    #     t = range(1, len(cc))
+    #     ax.loglog(t, cc[1:], style,
+    #               markevery=makers,
+    #               label=name)
 
     ax.hlines([eps], 1, max_iter, 'k', '--')
 
@@ -273,7 +274,7 @@ if __name__ == '__main__':
         curve_cost['fista'] = fista.train_cost
         curve_cost['linear'] = linear.train_cost
     except FileNotFoundError:
-        c_star = min(ista.train_cost[-1], fista.train_cost[-1]) - eps
+        # c_star = min(ista.train_cost[-1], fista.train_cost[-1]) - eps
         # curve_cost = {'lista': 2 * C0 * np.ones(len(layer_lvl)),
         #               'lfista': 2 * C0 * np.ones(len(layer_lvl)),
         #               'facto': 2 * C0 * np.ones(len(layer_lvl)),
